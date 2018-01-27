@@ -1,0 +1,52 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="Dig_data" version="1.3.0" audacityversion="2.1.0" sel0="0.0000000000" sel1="0.7510884354" vpos="0" h="0.0000000000" zoom="840.2734375000" rate="44100.0" snapto="off" selectionformat="hh:mm:ss">
+	<tags>
+		<tag name="ARTIST" value="Mike Koenig"/>
+		<tag name="TITLE" value="SoundBible.com"/>
+	</tags>
+	<wavetrack name="Dog Bite-SoundBible.com-107030898" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" isSelected="1" rate="44100" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="32329">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000088.au" len="32329" min="-0.805306" max="1.0" rms="0.10515"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="1">
+				<controlpoint t="0.733061224490" val="1.000000000000"/>
+			</envelope>
+		</waveclip>
+		<waveclip offset="0.73308390">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="794">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000c20.au" len="794" min="-0.000319" max="-0.0" rms="0.000007"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="1">
+				<controlpoint t="0.000000000000" val="1.000000000000"/>
+			</envelope>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="Dog Bite-SoundBible.com-107030898" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" isSelected="1" rate="44100" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="32329">
+				<waveblock start="0">
+					<simpleblockfile filename="e00005c1.au" len="32329" min="-0.653286" max="0.819477" rms="0.090453"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="1">
+				<controlpoint t="0.733061224490" val="1.000000000000"/>
+			</envelope>
+		</waveclip>
+		<waveclip offset="0.73308390">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="794">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000328.au" len="794" min="0.0" max="0.000547" rms="0.000011"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="1">
+				<controlpoint t="0.000000000000" val="1.000000000000"/>
+			</envelope>
+		</waveclip>
+	</wavetrack>
+</project>

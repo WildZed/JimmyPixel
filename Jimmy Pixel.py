@@ -1,0 +1,218 @@
+import random, sys, time, math, pygame
+from pygame.locals import *
+# Use common stuff from CandySeller until we've moved it into a Lib directory.
+
+sys.path.append( '../GameEngine' )
+
+from geometry import *
+import viewport, game, game_map, game_dynamics
+from game_objects import *
+from game_constants import *
+
+WINWIDTH = 800  # Width of the program's window, in pixels.
+WINHEIGHT = 600 # Height in pixels.
+
+BACKGROUND_COLOUR = ( 135, 178, 142 )
+
+JIMSIZE = 60    # How big Jimmy is.
+DERSIZE = 50    # How big the Derangatang is.
+DIGSIZE = 30    # How big the diggable spots are.
+
+MOVERATE = Vector( 17, 10 ) # How fast the player moves in the x and y direction.
+BOUNCERATE = 6       # How fast the player bounces (large is slower).
+BOUNCEHEIGHT = 10    # How high the player bounces.
+
+
+
+
+class JimmyPixel( game.Game ):
+    def __init__( self, viewPort ):
+        self.images = self.loadImages()
+
+        # Set up generic game one time set up.
+        game.Game.__init__( self, 'Jimmy Pixel', 'Jimmy Pixel Right.png', viewPort )
+
+        # Game one time setup.
+        self.setDrawOrder( 'BackGround', 'Sprite', 'Player' )
+        # This tells the game update which object types need to move with the camera.
+        # This makes objects stay put with respect to the world coordinates.
+        self.setCameraUpdates( 'BackGround', 'Sprite' )
+        self.setCursor()
+        viewPort.loadMusic( 'Dungeon of Pixels.mp3' )
+
+
+    # Per game initialisation.
+    def init( self ):
+        game.Game.init( self )
+
+        self.winMode = False           # If the player has won.
+        self.invulnerableMode = False  # If the player is invulnerable.
+        self.invulnerableStartTime = 0 # Time the player became invulnerable.
+        self.gameOverMode = False      # If the player has lost.
+        self.gameOverStartTime = 0     # Time the player lost.
+        self.moneyScore = 0
+        self.gameMap = self.createMap()
+
+
+    def loadImages( self ):
+        images = game_map.ImageStore()
+        images.load( 'Jimmy Pixel Right', 'RL' )
+        images.load( 'Jimmy Pixel Right Walk', 'RL' )
+        images.load( 'Derangatang Right', 'RL' )
+        images.load( 'Dungeon of Pixels Map' )
+        images.load( 'Diggable Spot' )
+
+        return images
+
+
+    def createMap( self ):
+        viewPort = self.viewPort
+        gameMap = game_map.Map()
+        images = self.images
+
+        gameMap.setImageStore( images )
+
+        gameMap.createScene( 'Dungeon of Pixels Map', BACKGROUND_COLOUR )
+        gameMap.addObject( BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000 ) )
+
+        gameMap.addPlayer( self.createPlayer() )
+
+        # Start off with some derangatangs on the screen.
+        gameMap.addSprite( self.createDerangatang() )
+        gameMap.addSprite( self.createDerangatang() )
+
+        return gameMap
+
+
+    def createPlayer( self ):
+        viewPort = self.viewPort
+        images = self.images
+        # How big the player starts off.
+        playerStartPos = Point( viewPort.halfWidth, viewPort.halfHeight )
+
+        # Sets up the movement style of the player.
+        # playerBounds = game_dynamics.RectangleBoundary( Rectangle( Point( 0, 220 ), Point( 900, 550 ) ) )
+        playerBounds = game_dynamics.CollisionBoundary( viewPort )
+        moveStyle = game_dynamics.KeyMovementStyle( boundaryStyle=playerBounds )
+        moveStyle.setMoveRate( MOVERATE )
+        moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
+
+        return Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, imageL=images.Jimmy_Pixel_RightL, imageR=images.Jimmy_Pixel_RightR )
+
+
+    def createDigspots( self, gameMap ):
+        for digNum in range( 1, 4 ):
+            digPos = Point( 140 + ( digNum - 1 ) * 320, 140 )
+            dig = Digspot( digPos, self.images.digs[digNum], size=DIGSIZE, positionStyle='centre' )
+            gameMap.addObject( digspot )
+
+
+    def createDerangatang( self ):
+        viewPort = self.viewPort
+        images = self.images
+        derangatangStartPos = Point( viewPort.halfWidth, viewPort.halfHeight )
+        derangatangBounds = game_dynamics.CollisionBoundary( viewPort )
+        moveStyle = game_dynamics.RandomWalkMovementStyle( boundaryStyle=derangatangBounds )
+        moveStyle.setMoveRate( MOVERATE )
+        moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
+
+        return Sprite( derangatangStartPos, moveStyle, size=DERSIZE, ratio=1.0, imageL=images.Derangatang_RightL, imageR=images.Derangatang_RightR, name='Derangatang' )
+
+
+    def setCursor( self ):
+        thickarrow_strings = (               # Sized 24x24.
+            "   XX                   ",
+            "  X..X                  ",
+            "  X..X                  ",
+            "  X..X                  ",
+            "  X..X                  ",
+            "  X..X                  ",
+            "  X..X                  ",
+            "  X..X                  ",
+            "  X..X                  ",
+            "  X..X                  ",
+            "XXXXXXXX                ",
+            "XXXXXXXX                ",
+            "   XX                   ",
+            "   XX                   ",
+            "  X..X                  ",
+            "  X..X                  ",
+            "   XX                   ",
+            "                        ",
+            "                        ",
+            "                        ",
+            "                        ",
+            "                        ",
+            "                        ",
+            "                        ")
+        datatuple, masktuple = pygame.cursors.compile( thickarrow_strings,
+                                      black='X', white='.', xor='o' )
+        pygame.mouse.set_cursor( (24,24), (0,0), datatuple, masktuple )
+
+
+    def processEvent( self, event ):
+        game.Game.processEvent( self, event )
+
+        viewPort = self.viewPort
+        gameMap = self.gameMap
+        player = gameMap.player
+
+        if event.type == KEYDOWN:
+            # Check if the key moves the player in a given direction.
+            player.setMovement( event.key )
+
+            if event.key == K_r and self.winMode:
+                self.running = False
+        elif event.type == KEYUP:
+            # Check if the key stops the player in a given direction.
+            player.stopMovement( event.key )
+
+
+    def updateState( self ):
+        game.Game.updateState( self )
+
+        viewPort = self.viewPort
+        gameMap = self.gameMap
+        player = gameMap.player
+
+        if not self.gameOverMode:
+            # Move the player according to the movement instructions.
+            player.move()
+
+        # Adjust camera if beyond the "camera slack".
+        playerCentre = Point( player.x + int( ( float( player.size ) + 0.5 ) / 2 ), player.y + int( ( float( player.size ) + 0.5 ) / 2 ) )
+        viewPort.adjustCamera( playerCentre )
+
+
+    # Update the positions of all the map objects according to the camera and new positions.
+    def updateMap( self ):
+        # Update the generic map stuff.
+        game.Game.updateMap( self )
+
+        viewPort = self.viewPort
+        gameMap = self.gameMap
+        player = gameMap.player
+
+        # Update the player.
+        player.update( viewPort.camera, gameOverMode=self.gameOverMode, invulnerableMode=self.invulnerableMode )
+
+
+    def run( self ):
+        self.viewPort.playMusic( loops=-1 )
+        game.Game.run( self )
+
+
+
+
+def main():
+    viewPort = viewport.ViewPort( WINWIDTH, WINHEIGHT )
+    game = JimmyPixel( viewPort )
+
+    while True:
+        game.run()
+        # Re-initialised the game state.
+        game.reset()
+
+
+if __name__ == '__main__':
+    main()
