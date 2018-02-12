@@ -33,10 +33,10 @@ class JimmyPixel( game.Game ):
         game.Game.__init__( self, 'Jimmy Pixel', 'Jimmy Pixel Right.png', viewPort )
 
         # Game one time setup.
-        self.setDrawOrder( 'BackGround', 'Sprite', 'Player' )
+        self.setDrawOrder( 'BackGround', 'Sprite', 'Digspot', 'Player')
         # This tells the game update which object types need to move with the camera.
         # This makes objects stay put with respect to the world coordinates.
-        self.setCameraUpdates( 'BackGround', 'Sprite' )
+        self.setCameraUpdates( 'BackGround', 'Sprite', 'Digspot' )
         self.setCursor()
         viewPort.loadMusic( 'Dungeon of Pixels.mp3' )
 
@@ -73,11 +73,16 @@ class JimmyPixel( game.Game ):
         gameMap.setImageStore( images )
 
         gameMap.createScene( 'Dungeon of Pixels Map', BACKGROUND_COLOUR )
-        gameMap.addObject( BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000 ) )
+        gameMap.addObject( BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000, name='Dungeon of Pixels' ) )
 
         gameMap.addPlayer( self.createPlayer() )
 
+        # Start off with some diggable spots on the screen.
+        self.createDigspots( gameMap, 2 )
+
         # Start off with some derangatangs on the screen.
+        gameMap.addSprite( self.createDerangatang() )
+        gameMap.addSprite( self.createDerangatang() )
         gameMap.addSprite( self.createDerangatang() )
         gameMap.addSprite( self.createDerangatang() )
 
@@ -97,20 +102,22 @@ class JimmyPixel( game.Game ):
         moveStyle.setMoveRate( MOVERATE )
         moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
 
-        return Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, imageL=images.Jimmy_Pixel_RightL, imageR=images.Jimmy_Pixel_RightR )
+        return Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, imageL=images.Jimmy_Pixel_RightL, imageR=images.Jimmy_Pixel_RightR, name='Jimmy Pixel' )
 
 
-    def createDigspots( self, gameMap ):
-        for digNum in range( 1, 4 ):
-            digPos = Point( 140 + ( digNum - 1 ) * 320, 140 )
-            dig = Digspot( digPos, self.images.digs[digNum], size=DIGSIZE, positionStyle='centre' )
-            gameMap.addObject( digspot )
+    def createDigspots( self, gameMap, num ):
+        for ii in range( num ):
+            pos = Point( random.randint( 0, WINWIDTH ), random.randint( 400, 500 ) )
+            dig = Digspot( pos, self.images.Diggable_Spot, size=DIGSIZE, name='Digspot' )
+            gameMap.addObject( dig )
 
 
     def createDerangatang( self ):
         viewPort = self.viewPort
         images = self.images
-        derangatangStartPos = Point( viewPort.halfWidth, viewPort.halfHeight )
+        random.seed( time.clock() )
+        derangatangStartPos = Point( viewPort.halfWidth, viewPort.halfHeight ) + Point( random.randint( -100, 100 ), random.randint( -100, 100 ) )
+
         derangatangBounds = game_dynamics.CollisionBoundary( viewPort )
         moveStyle = game_dynamics.RandomWalkMovementStyle( boundaryStyle=derangatangBounds )
         moveStyle.setMoveRate( MOVERATE )
@@ -166,6 +173,14 @@ class JimmyPixel( game.Game ):
         elif event.type == KEYUP:
             # Check if the key stops the player in a given direction.
             player.stopMovement( event.key )
+        elif event.type == MOUSEBUTTONUP:
+            digSpots = gameMap.objectsOfType( 'Digspot' )
+
+            for dig in digSpots:
+                # Does the click point collide with a colour that is not the background colour.
+                if viewPort.collisionOfPoint( self.clickPos, dig ):
+                    viewPort.playSound( 'Dig' )
+                    print( "Digging..." )
 
 
     def updateState( self ):
@@ -180,7 +195,8 @@ class JimmyPixel( game.Game ):
             player.move()
 
         # Adjust camera if beyond the "camera slack".
-        playerCentre = Point( player.x + int( ( float( player.size ) + 0.5 ) / 2 ), player.y + int( ( float( player.size ) + 0.5 ) / 2 ) )
+        playerCentre = player.getCentre()
+        # Point( player.x + int( ( float( player.size ) + 0.5 ) / 2 ), player.y + int( ( float( player.size ) + 0.5 ) / 2 ) )
         viewPort.adjustCamera( playerCentre )
 
 
