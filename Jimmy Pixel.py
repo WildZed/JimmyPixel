@@ -16,6 +16,7 @@ BACKGROUND_COLOUR = ( 135, 178, 142 )
 
 JIMSIZE = 60    # How big Jimmy is.
 DERSIZE = 50    # How big the Derangatang is.
+CGSIZE = 100    # How big the Cat Girl is.
 DIGSIZE = 30    # How big the diggable spots are.
 
 MOVERATE = Vector( 17, 10 ) # How fast the player moves in the x and y direction.
@@ -59,6 +60,7 @@ class JimmyPixel( game.Game ):
         images.load( 'Jimmy Pixel Right', 'RL' )
         images.load( 'Jimmy Pixel Right Walk', 'RL' )
         images.load( 'Derangatang Right', 'RL' )
+        images.load( 'Hannah the Cat Girl', 'RL' )
         images.load( 'Dungeon of Pixels Map' )
         images.load( 'Darkness' )
         images.load( 'Diggable Spot' )
@@ -75,10 +77,13 @@ class JimmyPixel( game.Game ):
 
         gameMap.createScene( 'Dungeon of Pixels Map', BACKGROUND_COLOUR )
         gameMap.addObject( BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000, name='Dungeon of Pixels' ) )
-        # Change this to attach to the player and position relative to the player, so that it follows the player around.
-        gameMap.addObject( Fog( Point( 50, 50 ), images.Darkness, size=1000, name='Darkness', positionStyle='viewport' ) )
 
-        gameMap.addPlayer( self.createPlayer() )
+        self.player = self.createPlayer()
+        gameMap.addPlayer( self.player )
+
+        # Attach to the player and position relative to the player, so that it follows the player around.
+        self.darkness = Fog( ORIGIN, images.Darkness, size=2000, name='Darkness', positionStyle='relative_centre' )
+        self.player.attachObject( self.darkness )
 
         # Start off with some diggable spots on the screen.
         self.createDigspots( gameMap, 2 )
@@ -86,7 +91,7 @@ class JimmyPixel( game.Game ):
         # Start off with some derangatangs on the screen.
         gameMap.addSprite( self.createDerangatang() )
         gameMap.addSprite( self.createDerangatang() )
-        #gameMap.addSprite( self.createDerangatang() )
+        gameMap.addSprite( self.createCatGirl() )
         #gameMap.addSprite( self.createDerangatang() )
 
         return gameMap
@@ -105,7 +110,7 @@ class JimmyPixel( game.Game ):
         moveStyle.setMoveRate( MOVERATE )
         moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
 
-        return Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, imageL=images.Jimmy_Pixel_RightL, imageR=images.Jimmy_Pixel_RightR, name='Jimmy Pixel' )
+        return Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, imageL=images.Jimmy_Pixel_RightL, imageR=images.Jimmy_Pixel_RightR, name='Jimmy Pixel', positionStyle='centre' )
 
 
     def createDigspots( self, gameMap, num ):
@@ -131,6 +136,24 @@ class JimmyPixel( game.Game ):
         # derangatang.setCollisionMask( InteractionType.IMPERVIOUS )
 
         return derangatang
+
+
+    def createCatGirl( self ):
+        viewPort = self.viewPort
+        images = self.images
+        random.seed( time.clock() )
+        catGirlStartPos = Point( viewPort.halfWidth, viewPort.halfHeight ) + Point( random.randint( -100, 100 ), random.randint( -100, 100 ) )
+
+        catGirlBounds = game_dynamics.CollisionBoundary( viewPort )
+        moveStyle = game_dynamics.RandomWalkMovementStyle( boundaryStyle=catGirlBounds )
+        moveStyle.setMoveRate( MOVERATE )
+        moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
+
+        catGirl = Sprite( catGirlStartPos, moveStyle, size=CGSIZE, ratio=1.0, imageL=images.Hannah_the_Cat_GirlL, imageR=images.Hannah_the_Cat_GirlR, name='Hannah' )
+        # Only collide with the map.
+        # derangatang.setCollisionMask( InteractionType.IMPERVIOUS )
+
+        return catGirl
 
 
     def setCursor( self ):
@@ -176,7 +199,10 @@ class JimmyPixel( game.Game ):
             player.setMovement( event.key )
 
             if event.key == K_r and self.winMode:
+                # Reset the game once you've won.
                 self.running = False
+            elif event.key == K_f:
+                self.darkness.toggleVisibility()
         elif event.type == KEYUP:
             # Check if the key stops the player in a given direction.
             player.stopMovement( event.key )
@@ -200,13 +226,15 @@ class JimmyPixel( game.Game ):
     def updateState( self ):
         game.Game.updateState( self )
 
+        if self.gameOverMode:
+            return
+
         viewPort = self.viewPort
         gameMap = self.gameMap
         player = gameMap.player
 
-        if not self.gameOverMode:
-            # Move the player according to the movement instructions.
-            player.move()
+        # Move the player according to the movement instructions.
+        player.move()
 
         # Adjust camera if beyond the "camera slack".
         playerCentre = player.getCentre()
