@@ -18,6 +18,7 @@ JIMSIZE = 60    # How big Jimmy is.
 DERSIZE = 50    # How big the Derangatang is.
 CGSIZE = 100    # How big the Cat Girl is.
 DIGSIZE = 30    # How big the diggable spots are.
+MONEYSIZE = 20  # How big the money is.
 
 MOVERATE = Vector( 17, 10 ) # How fast the player moves in the x and y direction.
 BOUNCERATE = 6       # How fast the player bounces (large is slower).
@@ -64,6 +65,7 @@ class JimmyPixel( game.Game ):
         images.load( 'Dungeon of Pixels Map' )
         images.load( 'Darkness' )
         images.load( 'Diggable Spot' )
+        images.load( 'Coin' )
 
         return images
 
@@ -86,7 +88,7 @@ class JimmyPixel( game.Game ):
         self.player.attachObject( self.darkness )
 
         # Start off with some diggable spots on the screen.
-        self.createDigspots( gameMap, 2 )
+        self.createDigspots( gameMap, 20 )
 
         # Start off with some derangatangs on the screen.
         gameMap.addSprite( self.createDerangatang() )
@@ -115,9 +117,16 @@ class JimmyPixel( game.Game ):
 
     def createDigspots( self, gameMap, num ):
         for ii in range( num ):
-            pos = Point( random.randint( 0, WINWIDTH ), random.randint( 400, 500 ) )
+            pos = Point( random.randint( -WINWIDTH, WINWIDTH * 2 ), random.randint( -WINHEIGHT, WINHEIGHT * 2 ) )
             dig = Digspot( pos, self.images.Diggable_Spot, size=DIGSIZE, name='Digspot' )
             gameMap.addObject( dig )
+
+
+    def createCoin( self ):
+        pos = Point( random.randint( 0, 20 ), random.randint( 0, 20 ) )
+        coin = Coin( pos, self.images.Coin, size=MONEYSIZE, positionStyle='relative_centre' )
+
+        return coin
 
 
     def createDerangatang( self ):
@@ -209,18 +218,40 @@ class JimmyPixel( game.Game ):
         elif event.type == MOUSEBUTTONUP:
             digSpots = gameMap.objectsOfType( 'Digspot' )
 
+            print "Checking if we're close enough to dig..."
+            clickPos = viewPort.getWorldCoordinate( self.clickPos )
+            playerPos = player.pos
+            diggingDistance = playerPos.manhattanDistance( clickPos )
+            print "Digging distance %d" % diggingDistance
+
             for dig in digSpots:
                 # Does the click point collide with a colour that is not the background colour.
                 # if viewPort.collisionOfPoint( self.clickPos, dig ):
                 # Does the click point collide with the dig spot's rectangle.
-                if dig.collidesWithPoint( self.clickPos, True ):
+
+                if diggingDistance < 120 and dig.collidesWithPoint( clickPos, True ):
                     viewPort.playSound( 'Dig' )
                     print( "Digging..." )
                     dig.digCount += 1
 
                     if dig.digCount >= 3:
                         # Do something.
+                        # Dug up some treasure!
+                        player.attachObject( self.createCoin() )
                         dig.delete()
+        elif event.type == COLLISION_EVENT or event.type == INTERACTION_EVENT:
+            obj1Type = event.obj1.__class__.__name__
+            obj2Type = event.obj2.__class__.__name__
+
+            # print "obj1Type %s obj2Type %s" % ( obj1Type, obj2Type )
+
+            if obj1Type == 'Player' and obj2Type == 'Sprite':
+                if event.obj2.name == 'Derangatang':
+                    print "Collided with Derangatang"
+                    viewPort.playSound( 'Derangatang Screech', checkBusy=True )
+                elif event.obj2.name == 'Hannah':
+                    print "Collided with Hannah"
+                    viewPort.playSound( 'Smilee Laugh', checkBusy=True )
 
 
     def updateState( self ):
