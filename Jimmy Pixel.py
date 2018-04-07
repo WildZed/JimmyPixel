@@ -33,10 +33,10 @@ class JimmyPixel( game.Game ):
         game.Game.__init__( self, 'Jimmy Pixel', 'Jimmy Pixel Right.png', viewPort )
 
         # Game one time setup.
-        self.setDrawOrder( 'BackGround', 'Sprite', 'Digspot', 'Player')
+        self.setDrawOrder( 'BackGround', 'Fog', 'Sprite', 'Digspot', 'Player')
         # This tells the game update which object types need to move with the camera.
         # This makes objects stay put with respect to the world coordinates.
-        self.setCameraUpdates( 'BackGround', 'Sprite', 'Digspot' )
+        self.setCameraUpdates( 'BackGround', 'Fog', 'Sprite', 'Digspot' )
         self.setCursor()
         viewPort.loadMusic( 'Dungeon of Pixels.mp3' )
 
@@ -60,6 +60,7 @@ class JimmyPixel( game.Game ):
         images.load( 'Jimmy Pixel Right Walk', 'RL' )
         images.load( 'Derangatang Right', 'RL' )
         images.load( 'Dungeon of Pixels Map' )
+        images.load( 'Darkness' )
         images.load( 'Diggable Spot' )
 
         return images
@@ -74,6 +75,8 @@ class JimmyPixel( game.Game ):
 
         gameMap.createScene( 'Dungeon of Pixels Map', BACKGROUND_COLOUR )
         gameMap.addObject( BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000, name='Dungeon of Pixels' ) )
+        # Change this to attach to the player and position relative to the player, so that it follows the player around.
+        gameMap.addObject( Fog( Point( 50, 50 ), images.Darkness, size=1000, name='Darkness', positionStyle='viewport' ) )
 
         gameMap.addPlayer( self.createPlayer() )
 
@@ -83,8 +86,8 @@ class JimmyPixel( game.Game ):
         # Start off with some derangatangs on the screen.
         gameMap.addSprite( self.createDerangatang() )
         gameMap.addSprite( self.createDerangatang() )
-        gameMap.addSprite( self.createDerangatang() )
-        gameMap.addSprite( self.createDerangatang() )
+        #gameMap.addSprite( self.createDerangatang() )
+        #gameMap.addSprite( self.createDerangatang() )
 
         return gameMap
 
@@ -123,7 +126,11 @@ class JimmyPixel( game.Game ):
         moveStyle.setMoveRate( MOVERATE )
         moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
 
-        return Sprite( derangatangStartPos, moveStyle, size=DERSIZE, ratio=1.0, imageL=images.Derangatang_RightL, imageR=images.Derangatang_RightR, name='Derangatang' )
+        derangatang = Sprite( derangatangStartPos, moveStyle, size=DERSIZE, ratio=1.0, imageL=images.Derangatang_RightL, imageR=images.Derangatang_RightR, name='Derangatang' )
+        # Only collide with the map.
+        # derangatang.setCollisionMask( InteractionType.IMPERVIOUS )
+
+        return derangatang
 
 
     def setCursor( self ):
@@ -178,9 +185,16 @@ class JimmyPixel( game.Game ):
 
             for dig in digSpots:
                 # Does the click point collide with a colour that is not the background colour.
-                if viewPort.collisionOfPoint( self.clickPos, dig ):
+                # if viewPort.collisionOfPoint( self.clickPos, dig ):
+                # Does the click point collide with the dig spot's rectangle.
+                if dig.collidesWithPoint( self.clickPos, True ):
                     viewPort.playSound( 'Dig' )
                     print( "Digging..." )
+                    dig.digCount += 1
+
+                    if dig.digCount >= 3:
+                        # Do something.
+                        dig.delete()
 
 
     def updateState( self ):
