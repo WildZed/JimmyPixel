@@ -9,6 +9,7 @@ import viewport, game, game_map, game_dynamics
 from game_objects import *
 from game_constants import *
 
+
 WINWIDTH = 800  # Width of the program's window, in pixels.
 WINHEIGHT = 600 # Height in pixels.
 
@@ -16,13 +17,16 @@ BACKGROUND_COLOUR = ( 135, 178, 142 )
 
 JIMSIZE = 60    # How big Jimmy is.
 DERSIZE = 50    # How big the Derangatang is.
-CGSIZE = 100    # How big the Cat Girl is.
+SMILESIZE = 60  # How big the Smilee is.
 DIGSIZE = 30    # How big the diggable spots are.
 MONEYSIZE = 20  # How big the money is.
 
-MOVERATE = Vector( 17, 10 ) # How fast the player moves in the x and y direction.
+MOVERATE = Vector( 15, 9 ) # How fast the player moves in the x and y direction.
+FLOATMOVERATE = Vector( 5, 3 ) # How fast things move when floating.
 BOUNCERATE = 6       # How fast the player bounces (large is slower).
+FLOATRATE = 16       # How fast things float (like bouncing).
 BOUNCEHEIGHT = 10    # How high the player bounces.
+FLOATHEIGHT = 20     # How high things float (like bouncing).
 
 
 
@@ -35,68 +39,67 @@ class JimmyPixel( game.Game ):
         game.Game.__init__( self, 'Jimmy Pixel', 'Jimmy Pixel Right.png', viewPort )
 
         # Game one time setup.
-        self.setDrawOrder( 'BackGround', 'Fog', 'Sprite', 'Digspot', 'Player')
-        # This tells the game update which object types need to move with the camera.
-        # This makes objects stay put with respect to the world coordinates.
-        self.setCameraUpdates( 'BackGround', 'Fog', 'Sprite', 'Digspot' )
+        self.setDrawOrder( 'Border', 'BackGround', 'Digspot', 'GhostSprite', 'Sprite', 'Player', 'Fog' )
         self.setCursor()
         viewPort.loadMusic( 'Dungeon of Pixels.mp3' )
+        viewPort.setCameraMovementStyle( game_dynamics.KeyMovementStyle( moveRate=Vector( 20, 12 ) ) )
+
+
+    def loadImages( self ):
+        images = game_map.ImageStore()
+        images.load( 'Dungeon of Pixels Map' )
+        images.load( 'Dungeon of Pixels Boundary' )
+        images.load( 'Jimmy Pixel Right', 'RL' )
+        images.load( 'Jimmy Pixel Right Walk', 'RL' )
+        images.load( 'Derangatang Right', 'RL' )
+        images.load( 'Smilee Right', 'RL' )
+        images.load( 'Darkness' )
+        images.load( 'Diggable Spot' )
+        #images.load( 'Coin' )
+
+        return images
 
 
     # Per game initialisation.
     def init( self ):
-        game.Game.init( self )
-
         self.winMode = False           # If the player has won.
         self.invulnerableMode = False  # If the player is invulnerable.
         self.invulnerableStartTime = 0 # Time the player became invulnerable.
         self.gameOverMode = False      # If the player has lost.
         self.gameOverStartTime = 0     # Time the player lost.
         self.moneyScore = 0
-        self.gameMap = self.createMap()
+        self.cameraMovement = False
+
+        game.Game.init( self )
 
 
-    def loadImages( self ):
-        images = game_map.ImageStore()
-        images.load( 'Jimmy Pixel Right', 'RL' )
-        images.load( 'Jimmy Pixel Right Walk', 'RL' )
-        images.load( 'Derangatang Right', 'RL' )
-        images.load( 'Hannah the Cat Girl', 'RL' )
-        images.load( 'Dungeon of Pixels Map' )
-        images.load( 'Darkness' )
-        images.load( 'Diggable Spot' )
-        images.load( 'Coin' )
-
-        return images
-
-
-    def createMap( self ):
+    def initMap( self ):
         viewPort = self.viewPort
-        gameMap = game_map.Map()
+        gameMap = self.gameMap
         images = self.images
 
         gameMap.setImageStore( images )
 
         gameMap.createScene( 'Dungeon of Pixels Map', BACKGROUND_COLOUR )
+        gameMap.addObject( Border( ORIGIN, images.Dungeon_of_Pixels_Boundary, size=2000, name='Dungeon of Pixels Border' ) )
         gameMap.addObject( BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000, name='Dungeon of Pixels' ) )
 
         self.player = self.createPlayer()
-        gameMap.addPlayer( self.player )
+        gameMap.addObject( self.player )
 
         # Attach to the player and position relative to the player, so that it follows the player around.
-        self.darkness = Fog( ORIGIN, images.Darkness, size=2000, name='Darkness', positionStyle='relative_centre' )
+        self.darkness = Fog( ORIGIN, images.Darkness, size=4000, name='Darkness', positionStyle='relative_centre', visible=False )
         self.player.attachObject( self.darkness )
 
         # Start off with some diggable spots on the screen.
         self.createDigspots( gameMap, 20 )
 
         # Start off with some derangatangs on the screen.
-        gameMap.addSprite( self.createDerangatang() )
-        gameMap.addSprite( self.createDerangatang() )
-        gameMap.addSprite( self.createCatGirl() )
-        #gameMap.addSprite( self.createDerangatang() )
-
-        return gameMap
+        gameMap.addObject( self.createDerangatang() )
+        gameMap.addObject( self.createDerangatang() )
+        smilee = self.createSmilee()
+        # smilee.toggleMovement()
+        gameMap.addObject( smilee )
 
 
     def createPlayer( self ):
@@ -107,7 +110,7 @@ class JimmyPixel( game.Game ):
 
         # Sets up the movement style of the player.
         # playerBounds = game_dynamics.RectangleBoundary( Rectangle( Point( 0, 220 ), Point( 900, 550 ) ) )
-        playerBounds = game_dynamics.CollisionBoundary( viewPort )
+        playerBounds = game_dynamics.CollisionBoundary()
         moveStyle = game_dynamics.KeyMovementStyle( boundaryStyle=playerBounds )
         moveStyle.setMoveRate( MOVERATE )
         moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
@@ -134,8 +137,9 @@ class JimmyPixel( game.Game ):
         images = self.images
         random.seed( time.clock() )
         derangatangStartPos = Point( viewPort.halfWidth, viewPort.halfHeight ) + Point( random.randint( -100, 100 ), random.randint( -100, 100 ) )
+        # derangatangStartPos = Point( viewPort.halfWidth, viewPort.halfHeight )
 
-        derangatangBounds = game_dynamics.CollisionBoundary( viewPort )
+        derangatangBounds = game_dynamics.CollisionBoundary()
         moveStyle = game_dynamics.RandomWalkMovementStyle( boundaryStyle=derangatangBounds )
         moveStyle.setMoveRate( MOVERATE )
         moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
@@ -147,22 +151,20 @@ class JimmyPixel( game.Game ):
         return derangatang
 
 
-    def createCatGirl( self ):
+    def createSmilee( self ):
         viewPort = self.viewPort
         images = self.images
         random.seed( time.clock() )
-        catGirlStartPos = Point( viewPort.halfWidth, viewPort.halfHeight ) + Point( random.randint( -100, 100 ), random.randint( -100, 100 ) )
+        smileeStartPos = Point( viewPort.halfWidth, viewPort.halfHeight ) + Point( random.randint( -100, 100 ), random.randint( -100, 100 ) )
 
-        catGirlBounds = game_dynamics.CollisionBoundary( viewPort )
-        moveStyle = game_dynamics.RandomWalkMovementStyle( boundaryStyle=catGirlBounds )
-        moveStyle.setMoveRate( MOVERATE )
-        moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
+        smileeBounds = game_dynamics.CollisionBoundary()
+        moveStyle = game_dynamics.RandomWalkMovementStyle( boundaryStyle=smileeBounds )
+        moveStyle.setMoveRate( FLOATMOVERATE )
+        moveStyle.setBounceRates( FLOATRATE, FLOATHEIGHT )
 
-        catGirl = Sprite( catGirlStartPos, moveStyle, size=CGSIZE, ratio=1.0, imageL=images.Hannah_the_Cat_GirlL, imageR=images.Hannah_the_Cat_GirlR, name='Hannah' )
-        # Only collide with the map.
-        # derangatang.setCollisionMask( InteractionType.IMPERVIOUS )
+        smilee = GhostSprite( smileeStartPos, moveStyle, size=SMILESIZE, ratio=1.0, imageL=images.Smilee_RightL, imageR=images.Smilee_RightR, name='Smilee' )
 
-        return catGirl
+        return smilee
 
 
     def setCursor( self ):
@@ -196,6 +198,28 @@ class JimmyPixel( game.Game ):
         pygame.mouse.set_cursor( (24,24), (0,0), datatuple, masktuple )
 
 
+    def dig( self, digSpot, pos ):
+        viewPort = self.viewPort
+        gameMap = self.gameMap
+        player = gameMap.player
+
+        print "Checking if we're close enough to dig..."
+        playerPos = player.pos
+        diggingDistance = playerPos.manhattanDistance( pos )
+        print "Digging distance %d" % diggingDistance
+
+        if diggingDistance < 120:
+            print( "Digging..." )
+            viewPort.playSound( 'Dig' )
+            digSpot.digCount += 1
+
+            if digSpot.digCount >= 3:
+                # Do something.
+                # Dug up some treasure!
+                # player.attachObject( self.createCoin() )
+                digSpot.delete()
+
+
     def processEvent( self, event ):
         game.Game.processEvent( self, event )
 
@@ -204,54 +228,77 @@ class JimmyPixel( game.Game ):
         player = gameMap.player
 
         if event.type == KEYDOWN:
-            # Check if the key moves the player in a given direction.
-            player.setMovement( event.key )
-
             if event.key == K_r and self.winMode:
                 # Reset the game once you've won.
                 self.running = False
             elif event.key == K_f:
                 self.darkness.toggleVisibility()
+            elif event.key == K_v:
+               backgrounds = gameMap.objectsOfType( 'BackGround' )
+               backgrounds[0].toggleVisibility()
+            elif event.key == K_b:
+               backgrounds = gameMap.objectsOfType( 'BackGround' )
+               backgrounds[0].toggleEnabled()
+            elif K_c == event.key:
+                player.stopMovement()
+                self.cameraMovement = True
+
+            if self.cameraMovement:
+                viewPort.setCameraMovement( key=event.key )
+            else:
+                # Check if the key moves the player in a given direction.
+                player.setMovement( key=event.key )
         elif event.type == KEYUP:
-            # Check if the key stops the player in a given direction.
-            player.stopMovement( event.key )
-        elif event.type == MOUSEBUTTONUP:
-            digSpots = gameMap.objectsOfType( 'Digspot' )
+            if K_c == event.key:
+                self.cameraMovement = False
+                viewPort.stopCameraMovement()
 
-            print "Checking if we're close enough to dig..."
-            clickPos = viewPort.getWorldCoordinate( self.clickPos )
-            playerPos = player.pos
-            diggingDistance = playerPos.manhattanDistance( clickPos )
-            print "Digging distance %d" % diggingDistance
+            if self.cameraMovement:
+                viewPort.stopCameraMovement( key=event.key )
+            else:
+                # Check if the key stops the player in a given direction.
+                player.stopMovement( key=event.key )
+        # elif event.type == MOUSEBUTTONUP:
+        #     digSpots = gameMap.objectsOfType( 'Digspot' )
+        #
+        #     print "Checking if we're close enough to dig..."
+        #     clickPos = viewPort.getWorldCoordinate( self.clickPos )
+        #     playerPos = player.pos
+        #     diggingDistance = playerPos.manhattanDistance( clickPos )
+        #     print "Digging distance %d" % diggingDistance
+        #
+        #     for dig in digSpots:
+        #         # Does the click point collide with a colour that is not the background colour.
+        #         # if viewPort.collisionOfPoint( self.clickPos, dig ):
+        #         # Does the click point collide with the dig spot's rectangle.
+        #
+        #         if diggingDistance < 120 and dig.collidesWithPoint( clickPos, True ):
+        #             viewPort.playSound( 'Dig' )
+        #             print( "Digging..." )
+        #             dig.digCount += 1
+        #
+        #             if dig.digCount >= 3:
+        #                 # Do something.
+        #                 # Dug up some treasure!
+        #                 # player.attachObject( self.createCoin() )
+        #                 dig.delete()
+        elif event.type == INTERACTION_EVENT:
+            # print "Interaction event %s <-> %s" % ( event.obj1, event.obj2 )
 
-            for dig in digSpots:
-                # Does the click point collide with a colour that is not the background colour.
-                # if viewPort.collisionOfPoint( self.clickPos, dig ):
-                # Does the click point collide with the dig spot's rectangle.
+            if event.obj1.isInteractionTypePair( event.obj2, 'Player', 'GhostSprite=Smilee' ):
+                print "Interacted with Smilee"
+                viewPort.playSound( 'Smilee Laugh', checkBusy=True )
+        elif event.type == COLLISION_EVENT:
+            # print "Collision event %s <-> %s" % ( event.obj1, event.obj2 )
 
-                if diggingDistance < 120 and dig.collidesWithPoint( clickPos, True ):
-                    viewPort.playSound( 'Dig' )
-                    print( "Digging..." )
-                    dig.digCount += 1
+            if event.obj1.isInteractionTypePair( event.obj2, 'Player', 'Sprite=Derangatang' ):
+                print "Collided with Derangatang"
+                viewPort.playSound( 'Derangatang Screech', checkBusy=True )
+        elif event.type == CLICK_COLLISION_EVENT:
+            print "Click collision event %s <-> %s" % ( event.obj, event.pos )
 
-                    if dig.digCount >= 3:
-                        # Do something.
-                        # Dug up some treasure!
-                        player.attachObject( self.createCoin() )
-                        dig.delete()
-        elif event.type == COLLISION_EVENT or event.type == INTERACTION_EVENT:
-            obj1Type = event.obj1.__class__.__name__
-            obj2Type = event.obj2.__class__.__name__
-
-            # print "obj1Type %s obj2Type %s" % ( obj1Type, obj2Type )
-
-            if obj1Type == 'Player' and obj2Type == 'Sprite':
-                if event.obj2.name == 'Derangatang':
-                    print "Collided with Derangatang"
-                    viewPort.playSound( 'Derangatang Screech', checkBusy=True )
-                elif event.obj2.name == 'Hannah':
-                    print "Collided with Hannah"
-                    viewPort.playSound( 'Smilee Laugh', checkBusy=True )
+            if event.obj.name == 'Digspot':
+                self.dig( event.obj, viewPort.getWorldCoordinate( self.clickPos ) )
 
 
     def updateState( self ):
@@ -264,13 +311,12 @@ class JimmyPixel( game.Game ):
         gameMap = self.gameMap
         player = gameMap.player
 
-        # Move the player according to the movement instructions.
-        player.move()
-
         # Adjust camera if beyond the "camera slack".
-        playerCentre = player.getCentre()
-        # Point( player.x + int( ( float( player.size ) + 0.5 ) / 2 ), player.y + int( ( float( player.size ) + 0.5 ) / 2 ) )
-        viewPort.adjustCamera( playerCentre )
+        if self.cameraMovement:
+            viewPort.moveCamera()
+        else:
+            playerCentre = player.getCentre()
+            viewPort.adjustCamera( playerCentre )
 
 
     # Update the positions of all the map objects according to the camera and new positions.
