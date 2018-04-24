@@ -33,10 +33,8 @@ FLOATHEIGHT = 20     # How high things float (like bouncing).
 
 class JimmyPixel( game.Game ):
     def __init__( self, viewPort ):
-        self.images = self.loadImages()
-
         # Set up generic game one time set up.
-        game.Game.__init__( self, 'Jimmy Pixel', 'Jimmy Pixel Right.png', viewPort )
+        game.Game.__init__( self, 'Jimmy Pixel', 'Jimmy Pixel Right', viewPort )
 
         # Game one time setup.
         self.setDrawOrder( 'Border', 'BackGround', 'Digspot', 'GhostSprite', 'Sprite', 'Player', 'Fog' )
@@ -46,7 +44,7 @@ class JimmyPixel( game.Game ):
 
 
     def loadImages( self ):
-        images = game_map.ImageStore()
+        images = self.images
         images.load( 'Dungeon of Pixels Map' )
         images.load( 'Dungeon of Pixels Boundary' )
         images.load( 'Jimmy Pixel Right', 'RL' )
@@ -56,8 +54,6 @@ class JimmyPixel( game.Game ):
         images.load( 'Darkness' )
         images.load( 'Diggable Spot' )
         #images.load( 'Coin' )
-
-        return images
 
 
     # Per game initialisation.
