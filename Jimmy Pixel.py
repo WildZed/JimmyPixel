@@ -282,16 +282,16 @@ class JimmyPixel( game.Game ):
             # print "Interaction event %s <-> %s" % ( event.obj1, event.obj2 )
 
             if event.obj1.isInteractionTypePair( event.obj2, 'Player', 'GhostSprite=Smilee' ):
-                print "Interacted with Smilee"
+                # print "Interacted with Smilee"
                 viewPort.playSound( 'Smilee Laugh', checkBusy=True )
         elif event.type == COLLISION_EVENT:
             # print "Collision event %s <-> %s" % ( event.obj1, event.obj2 )
 
             if event.obj1.isInteractionTypePair( event.obj2, 'Player', 'Sprite=Derangatang' ):
-                print "Collided with Derangatang"
+                # print "Collided with Derangatang"
                 viewPort.playSound( 'Derangatang Screech', checkBusy=True )
         elif event.type == CLICK_COLLISION_EVENT:
-            print "Click collision event %s <-> %s" % ( event.obj, event.pos )
+            # print "Click collision event %s <-> %s" % ( event.obj, event.pos )
 
             if event.obj.name == 'Digspot':
                 self.dig( event.obj, viewPort.getWorldCoordinate( self.clickPos ) )
@@ -336,8 +336,10 @@ class JimmyPixel( game.Game ):
 
 
 def main():
-    viewPort = viewport.ViewPort( WINWIDTH, WINHEIGHT )
+    print( "Starting Jimmy Pixel..." )
+    viewPort = viewport.ViewPort( WINWIDTH, WINHEIGHT, topLeft=Point( 400, 80 ) )
     game = JimmyPixel( viewPort )
+    print( "Created Jimmy Pixel game..." )
 
     while True:
         game.run()
