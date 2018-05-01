@@ -76,7 +76,7 @@ class JimmyPixel( game.Game ):
 
         gameMap.setImageStore( images )
 
-        gameMap.createScene( 'Dungeon of Pixels Map', BACKGROUND_COLOUR )
+        gameMap.createScene( 'Dungeon of Pixels Map', backGroundColour=BACKGROUND_COLOUR )
         gameMap.addObject( Border( ORIGIN, images.Dungeon_of_Pixels_Boundary, size=2000, name='Dungeon of Pixels Border' ) )
         gameMap.addObject( BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000, name='Dungeon of Pixels' ) )
 
