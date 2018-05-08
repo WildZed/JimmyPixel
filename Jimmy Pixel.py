@@ -46,6 +46,7 @@ class JimmyPixel( game.Game ):
     def loadImages( self ):
         images = self.images
         images.load( 'Dungeon of Pixels Map' )
+        images.load( 'Treasure Cave' )
         images.load( 'Dungeon of Pixels Boundary' )
         images.load( 'Jimmy Pixel Right', 'RL' )
         images.load( 'Jimmy Pixel Right Walk', 'RL' )
@@ -53,6 +54,7 @@ class JimmyPixel( game.Game ):
         images.load( 'Smilee Right', 'RL' )
         images.load( 'Darkness' )
         images.load( 'Diggable Spot' )
+        images.load( 'Portal' )
         #images.load( 'Coin' )
 
 
@@ -89,6 +91,20 @@ class JimmyPixel( game.Game ):
 
         # Start off with some diggable spots on the screen.
         self.createDigspots( gameMap, 20 )
+
+        portalCave1 = Portal( Point( 1680, 1480 ), images.Portal, size=( JIMSIZE ), positionStyle='centre', name='portalcave1' )
+        gameMap.addObject( portalCave1 )
+
+        treasureCave1 = SoftBackGround( ORIGIN, images.Treasure_Cave, size=( WINWIDTH / 2 ) )
+        treasureCave1Rect = treasureCave1.getRect()
+        treasureCave1Bounds = game_dynamics.RectangleBoundary( treasureCave1Rect, grow=10 )
+        gameMap.createScene( 'Treasure Cave 1', backGroundColour=BACKGROUND_COLOUR, boundaryStyle=treasureCave1Bounds )
+        gameMap.changeScene( 'Treasure Cave 1' )
+        gameMap.addObject( treasureCave1 )
+        portalDungeon1 = Portal( Point( 200, 200 ), images.Portal, size=( JIMSIZE ), positionStyle='centre', name='portaldungeon1' )
+        gameMap.addObject( portalDungeon1 )
+
+        gameMap.changeScene( 'Dungeon of Pixels Map' )
 
         # Start off with some derangatangs on the screen.
         gameMap.addObject( self.createDerangatang() )
@@ -216,6 +232,31 @@ class JimmyPixel( game.Game ):
                 digSpot.delete()
 
 
+    def changeScene( self, player, sceneName, returnPortalName ):
+        gameMap = self.gameMap
+
+        if not gameMap.changeScene( sceneName ):
+            return
+
+        viewPort = self.viewPort
+        player.moveToScene( sceneName )
+        scene = gameMap.getScene( sceneName )
+        returnPortal = scene.getNamedObject( returnPortalName )
+        newPos = returnPortal.getPos() + Point( 40, 40 )
+        player.setPos( newPos )
+        viewPort.adjustCamera( newPos )
+
+
+    def moveToScene( self, sprite, sceneName, returnPortalName ):
+        gameMap = self.gameMap
+        viewPort = self.viewPort
+        sprite.moveToScene( sceneName )
+        scene = gameMap.getScene( sceneName )
+        returnPortal = scene.getNamedObject( returnPortalName )
+        newPos = returnPortal.getPos() + Point( 20, 20 )
+        sprite.setPos( newPos )
+
+
     def processEvent( self, event ):
         game.Game.processEvent( self, event )
 
@@ -230,11 +271,15 @@ class JimmyPixel( game.Game ):
             elif event.key == K_f:
                 self.darkness.toggleVisibility()
             elif event.key == K_v:
-               backgrounds = gameMap.objectsOfType( 'BackGround' )
-               backgrounds[0].toggleVisibility()
+                backgrounds = gameMap.objectsOfType( 'BackGround' )
+
+                if backgrounds:
+                    backgrounds[0].toggleVisibility()
             elif event.key == K_b:
-               backgrounds = gameMap.objectsOfType( 'BackGround' )
-               backgrounds[0].toggleEnabled()
+                backgrounds = gameMap.objectsOfType( 'BackGround' )
+
+                if backgrounds:
+                    backgrounds[0].toggleEnabled()
             elif K_c == event.key:
                 player.stopMovement()
                 self.cameraMovement = True
@@ -290,6 +335,14 @@ class JimmyPixel( game.Game ):
             if event.obj1.isInteractionTypePair( event.obj2, 'Player', 'Sprite=Derangatang' ):
                 # print "Collided with Derangatang"
                 viewPort.playSound( 'Derangatang Screech', checkBusy=True )
+            elif event.obj1.isInteractionTypePair( event.obj2, 'Player', 'Portal=portalcave1' ):
+                self.changeScene( event.obj1, 'Treasure Cave 1', 'portaldungeon1' )
+            elif event.obj1.isInteractionTypePair( event.obj2, 'Player', 'Portal=portaldungeon1' ):
+                self.changeScene( event.obj1, 'Dungeon of Pixels Map', 'portalcave1' )
+            elif event.obj1.isInteractionTypePair( event.obj2, 'Sprite=Derangatang', 'Portal=portalcave1' ):
+                self.moveToScene( event.obj1, 'Treasure Cave 1', 'portaldungeon1' )
+            elif event.obj1.isInteractionTypePair( event.obj2, 'Sprite=Derangatang', 'Portal=portaldungeon1' ):
+                self.moveToScene( event.obj1, 'Dungeon of Pixels Map', 'portalcave1' )
         elif event.type == CLICK_COLLISION_EVENT:
             # print "Click collision event %s <-> %s" % ( event.obj, event.pos )
 
