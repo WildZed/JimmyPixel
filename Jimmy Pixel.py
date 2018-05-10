@@ -39,8 +39,10 @@ class JimmyPixel( game.Game ):
         # Game one time setup.
         self.setDrawOrder( 'Border', 'BackGround', 'Digspot', 'GhostSprite', 'Sprite', 'Player', 'Fog' )
         self.setCursor()
+        self.setAllowDrag()
         viewPort.loadMusic( 'Dungeon of Pixels.mp3' )
         viewPort.setCameraMovementStyle( game_dynamics.KeyMovementStyle( moveRate=Vector( 20, 12 ) ) )
+        viewPort.setCameraSlack( 90 )
 
 
     def loadImages( self ):
@@ -66,7 +68,6 @@ class JimmyPixel( game.Game ):
         self.gameOverMode = False      # If the player has lost.
         self.gameOverStartTime = 0     # Time the player lost.
         self.moneyScore = 0
-        self.cameraMovement = False
 
         game.Game.init( self )
 
@@ -79,20 +80,20 @@ class JimmyPixel( game.Game ):
         gameMap.setImageStore( images )
 
         gameMap.createScene( 'Dungeon of Pixels Map', backGroundColour=BACKGROUND_COLOUR )
-        gameMap.addObject( Border( ORIGIN, images.Dungeon_of_Pixels_Boundary, size=2000, name='Dungeon of Pixels Border' ) )
-        gameMap.addObject( BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000, name='Dungeon of Pixels' ) )
+        gameMap.addObject( Border( ORIGIN, images.Dungeon_of_Pixels_Boundary, size=2000, name='Dungeon of Pixels Border', positionStyle='top_left' ) )
+        gameMap.addObject( BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000, name='Dungeon of Pixels', positionStyle='top_left' ) )
 
         self.player = self.createPlayer()
         gameMap.addObject( self.player )
 
         # Attach to the player and position relative to the player, so that it follows the player around.
-        self.darkness = Fog( ORIGIN, images.Darkness, size=4000, name='Darkness', positionStyle='relative_centre', visible=False )
+        self.darkness = Fog( ORIGIN, images.Darkness, size=4000, name='Darkness', visible=False )
         self.player.attachObject( self.darkness )
 
         # Start off with some diggable spots on the screen.
         self.createDigspots( gameMap, 20 )
 
-        portalCave1 = Portal( Point( 1680, 1480 ), images.Portal, size=( JIMSIZE ), positionStyle='centre', name='portalcave1' )
+        portalCave1 = Portal( Point( 1680, 1480 ), images.Portal, size=( JIMSIZE ), name='portalcave1' )
         gameMap.addObject( portalCave1 )
 
         treasureCave1 = SoftBackGround( ORIGIN, images.Treasure_Cave, size=( WINWIDTH / 2 ) )
@@ -101,7 +102,7 @@ class JimmyPixel( game.Game ):
         gameMap.createScene( 'Treasure Cave 1', backGroundColour=BACKGROUND_COLOUR, boundaryStyle=treasureCave1Bounds )
         gameMap.changeScene( 'Treasure Cave 1' )
         gameMap.addObject( treasureCave1 )
-        portalDungeon1 = Portal( Point( 200, 200 ), images.Portal, size=( JIMSIZE ), positionStyle='centre', name='portaldungeon1' )
+        portalDungeon1 = Portal( ORIGIN, images.Portal, size=( JIMSIZE ), name='portaldungeon1' )
         gameMap.addObject( portalDungeon1 )
 
         gameMap.changeScene( 'Dungeon of Pixels Map' )
@@ -127,7 +128,7 @@ class JimmyPixel( game.Game ):
         moveStyle.setMoveRate( MOVERATE )
         moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
 
-        return Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, imageL=images.Jimmy_Pixel_RightL, imageR=images.Jimmy_Pixel_RightR, name='Jimmy Pixel', positionStyle='centre' )
+        return Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, imageL=images.Jimmy_Pixel_RightL, imageR=images.Jimmy_Pixel_RightR, name='Jimmy Pixel' )
 
 
     def createDigspots( self, gameMap, num ):
@@ -139,7 +140,7 @@ class JimmyPixel( game.Game ):
 
     def createCoin( self ):
         pos = Point( random.randint( 0, 20 ), random.randint( 0, 20 ) )
-        coin = Coin( pos, self.images.Coin, size=MONEYSIZE, positionStyle='relative_centre' )
+        coin = Coin( pos, self.images.Coin, size=MONEYSIZE )
 
         return coin
 
@@ -280,25 +281,6 @@ class JimmyPixel( game.Game ):
 
                 if backgrounds:
                     backgrounds[0].toggleEnabled()
-            elif K_c == event.key:
-                player.stopMovement()
-                self.cameraMovement = True
-
-            if self.cameraMovement:
-                viewPort.setCameraMovement( key=event.key )
-            else:
-                # Check if the key moves the player in a given direction.
-                player.setMovement( key=event.key )
-        elif event.type == KEYUP:
-            if K_c == event.key:
-                self.cameraMovement = False
-                viewPort.stopCameraMovement()
-
-            if self.cameraMovement:
-                viewPort.stopCameraMovement( key=event.key )
-            else:
-                # Check if the key stops the player in a given direction.
-                player.stopMovement( key=event.key )
         # elif event.type == MOUSEBUTTONUP:
         #     digSpots = gameMap.objectsOfType( 'Digspot' )
         #
@@ -344,8 +326,6 @@ class JimmyPixel( game.Game ):
             elif event.obj1.isInteractionTypePair( event.obj2, 'Sprite=Derangatang', 'Portal=portaldungeon1' ):
                 self.moveToScene( event.obj1, 'Dungeon of Pixels Map', 'portalcave1' )
         elif event.type == CLICK_COLLISION_EVENT:
-            # print "Click collision event %s <-> %s" % ( event.obj, event.pos )
-
             if event.obj.name == 'Digspot':
                 self.dig( event.obj, viewPort.getWorldCoordinate( self.clickPos ) )
 
@@ -355,17 +335,6 @@ class JimmyPixel( game.Game ):
 
         if self.gameOverMode:
             return
-
-        viewPort = self.viewPort
-        gameMap = self.gameMap
-        player = gameMap.player
-
-        # Adjust camera if beyond the "camera slack".
-        if self.cameraMovement:
-            viewPort.moveCamera()
-        else:
-            playerCentre = player.getCentre()
-            viewPort.adjustCamera( playerCentre )
 
 
     # Update the positions of all the map objects according to the camera and new positions.
@@ -377,7 +346,7 @@ class JimmyPixel( game.Game ):
         gameMap = self.gameMap
         player = gameMap.player
 
-        # Update the player.
+        # Update the player (again) with the extra info..
         player.update( viewPort.camera, gameOverMode=self.gameOverMode, invulnerableMode=self.invulnerableMode )
 
 
