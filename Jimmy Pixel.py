@@ -216,10 +216,10 @@ class JimmyPixel( game.Game ):
         gameMap = self.gameMap
         player = gameMap.player
 
-        print "Checking if we're close enough to dig..."
+        print( "Checking if we're close enough to dig..." )
         playerPos = player.pos
         diggingDistance = playerPos.manhattanDistance( pos )
-        print "Digging distance %d" % diggingDistance
+        print( "Digging distance %d" % diggingDistance )
 
         if diggingDistance < 120:
             print( "Digging..." )
@@ -284,11 +284,11 @@ class JimmyPixel( game.Game ):
         # elif event.type == MOUSEBUTTONUP:
         #     digSpots = gameMap.objectsOfType( 'Digspot' )
         #
-        #     print "Checking if we're close enough to dig..."
+        #     print( "Checking if we're close enough to dig..." )
         #     clickPos = viewPort.getWorldCoordinate( self.clickPos )
         #     playerPos = player.pos
         #     diggingDistance = playerPos.manhattanDistance( clickPos )
-        #     print "Digging distance %d" % diggingDistance
+        #     print( "Digging distance %d" % diggingDistance )
         #
         #     for dig in digSpots:
         #         # Does the click point collide with a colour that is not the background colour.
@@ -306,16 +306,16 @@ class JimmyPixel( game.Game ):
         #                 # player.attachObject( self.createCoin() )
         #                 dig.delete()
         elif event.type == INTERACTION_EVENT:
-            # print "Interaction event %s <-> %s" % ( event.obj1, event.obj2 )
+            # print( "Interaction event %s <-> %s" % ( event.obj1, event.obj2 ) )
 
             if event.obj1.isInteractionTypePair( event.obj2, 'Player', 'GhostSprite=Smilee' ):
-                # print "Interacted with Smilee"
+                # print( "Interacted with Smilee" )
                 viewPort.playSound( 'Smilee Laugh', checkBusy=True )
         elif event.type == COLLISION_EVENT:
-            # print "Collision event %s <-> %s" % ( event.obj1, event.obj2 )
+            # print( "Collision event %s <-> %s" % ( event.obj1, event.obj2 ) )
 
             if event.obj1.isInteractionTypePair( event.obj2, 'Player', 'Sprite=Derangatang' ):
-                # print "Collided with Derangatang"
+                # print( "Collided with Derangatang" )
                 viewPort.playSound( 'Derangatang Screech', checkBusy=True )
             elif event.obj1.isInteractionTypePair( event.obj2, 'Player', 'Portal=portalcave1' ):
                 self.changeScene( event.obj1, 'Treasure Cave 1', 'portaldungeon1' )
