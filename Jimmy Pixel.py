@@ -92,7 +92,7 @@ class JimmyPixel( game.Game ):
         gameMap.addObject( self.player )
 
         # Attach to the player and position relative to the player, so that it follows the player around.
-        self.darkness = go.Fog( ORIGIN, images.Darkness, size=4000, name='Darkness', visible=False )
+        self.darkness = go.Fog( ORIGIN, images.Darkness, size=800, name='Darkness', visible=False )
         self.player.attachObject( self.darkness )
 
         # Start off with some diggable spots on the screen.
