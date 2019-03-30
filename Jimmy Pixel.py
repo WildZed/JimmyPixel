@@ -52,13 +52,13 @@ class JimmyPixel( game.Game ):
 
     def loadImages( self ):
         images = self.images
-        images.load( 'Dungeon of Pixels Map' )
+        images.load( 'Dungeon of Pixels Map' ) #, alpha=False )
         images.load( 'Treasure Cave' )
-        images.load( 'Dungeon of Pixels Boundary' )
+        images.load( 'Dungeon of Pixels Boundary' ) #, alpha=False )
         images.load( 'Jimmy Pixel Right', 'RL' )
         images.load( 'Jimmy Pixel Right Walk', 'RL' )
         images.load( 'Derangatang Right', 'RL' )
-        images.load( 'Smilee Right', 'RL' )
+        images.load( 'Smilee Right', 'RL' ) #, alpha=False )
         images.load( 'Darkness' )
         images.load( 'Diggable Spot' )
         images.load( 'Portal' )
