@@ -52,17 +52,17 @@ class JimmyPixel( game.Game ):
 
     def loadImages( self ):
         images = self.images
-        images.load( 'Dungeon of Pixels Map' ) #, alpha=False )
-        images.load( 'Treasure Cave' )
-        images.load( 'Dungeon of Pixels Boundary' ) #, alpha=False )
-        images.load( 'Jimmy Pixel Right', 'RL' )
-        images.load( 'Jimmy Pixel Right Walk', 'RL' )
-        images.load( 'Derangatang Right', 'RL' )
-        images.load( 'Smilee Right', 'RL' ) #, alpha=False )
+        images.load( 'Dungeon of Pixels Boundary', alpha=False )
+        images.load( 'Dungeon of Pixels Map', alpha=False )
+        images.load( 'Treasure Cave', alpha=False )
+        images.load( 'Jimmy Pixel Right', 'RL', alpha=False )
+        images.load( 'Jimmy Pixel Right Walk', 'RL', alpha=False )
+        images.load( 'Derangatang Right', 'RL', alpha=False )
+        images.load( 'Smilee Right', 'RL', alpha=False )
         images.load( 'Darkness' )
-        images.load( 'Diggable Spot' )
-        images.load( 'Portal' )
-        images.load( 'Coin' )
+        images.load( 'Diggable Spot', alpha=False )
+        images.load( 'Portal', alpha=False )
+        images.load( 'Coin', alpha=False )
 
 
     # Per game initialisation.
@@ -249,21 +249,26 @@ class JimmyPixel( game.Game ):
         player = gameMap.player
 
         if event.type == KEYDOWN:
-            if event.key == K_r and self.winMode:
-                # Reset the game once you've won.
-                self.running = False
-            elif event.key == K_f:
-                self.darkness.toggleVisibility()
-            elif event.key == K_v:
-                backgrounds = gameMap.objectsOfType( go.BackGround )
+            keyMods = pygame.key.get_mods()
 
-                if backgrounds:
-                    backgrounds[0].toggleVisibility()
-            elif event.key == K_b:
-                backgrounds = gameMap.objectsOfType( go.BackGround )
+            if keyMods:
+                pass
+            else:
+                if event.key == K_r and self.winMode:
+                    # Reset the game once you've won.
+                    self.running = False
+                elif event.key == K_f:
+                    self.darkness.toggleVisibility()
+                elif event.key == K_v:
+                    backgrounds = gameMap.objectsOfType( go.BackGround )
 
-                if backgrounds:
-                    backgrounds[0].toggleEnabled()
+                    if backgrounds:
+                        backgrounds[0].toggleVisibility()
+                elif event.key == K_b:
+                    backgrounds = gameMap.objectsOfType( go.BackGround )
+
+                    if backgrounds:
+                        backgrounds[0].toggleEnabled()
         elif event.type == gc.INTERACTION_EVENT:
             # print( "Interaction event %s <-> %s" % ( event.obj1, event.obj2 ) )
 
