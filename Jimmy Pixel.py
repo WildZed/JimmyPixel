@@ -24,7 +24,7 @@ DERSIZE = 50    # How big the Derangatang is.
 SMILESIZE = 60  # How big the Smilee is.
 DIGSIZE = 30    # How big the diggable spots are.
 MONEYSIZE = 20  # How big the money is.
-CAVESIZE = 70   # How big the cave is.
+CAVESIZE = 100  # How big the cave is.
 
 MOVERATE = Vector( 12, 12 ) # How fast the player moves in the x and y direction.
 FLOATMOVERATE = Vector( 6, 6 ) # How fast things move when floating.
@@ -63,6 +63,7 @@ class JimmyPixel( game.Game ):
         images.load( 'Diggable Spot' )
         images.load( 'Portal' )
         images.load( 'Coin' )
+        images.load( 'Bag', alpha=False )
 
 
     # Per game initialisation.
@@ -101,9 +102,9 @@ class JimmyPixel( game.Game ):
         portalCave1 = go.Portal( Point( 1680, 1480 ), images.Portal, size=( JIMSIZE ), name='portalcave1' )
         gameMap.addObject( portalCave1 )
 
-        treasureCave1 = go.SoftBackGround( ORIGIN, images.Treasure_Cave, size=( WINWIDTH / 2 ) )
+        treasureCave1 = go.SoftBackGround( ORIGIN, images.Treasure_Cave, size=( WINWIDTH ) )
         treasureCave1Rect = treasureCave1.getRect()
-        treasureCave1Bounds = gd.RectangleBoundary( treasureCave1Rect, grow=-40 )
+        treasureCave1Bounds = gd.RectangleBoundary( treasureCave1Rect, grow=-140 )
         gameMap.createScene( 'Treasure Cave 1', backGroundColour=BACKGROUND_COLOUR, boundaryStyle=treasureCave1Bounds )
         gameMap.changeScene( 'Treasure Cave 1' )
         gameMap.addObject( treasureCave1 )
