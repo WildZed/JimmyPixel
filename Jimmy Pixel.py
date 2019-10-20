@@ -85,8 +85,8 @@ class JimmyPixel( game.Game ):
         gameMap.setImageStore( images )
 
         gameMap.createScene( 'Dungeon of Pixels Map', backGroundColour=BACKGROUND_COLOUR )
-        gameMap.addObject( go.Border( ORIGIN, images.Dungeon_of_Pixels_Boundary, size=2000, name='Dungeon of Pixels Border', positionStyle='top_left' ) )
-        gameMap.addObject( go.BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000, name='Dungeon of Pixels', positionStyle='top_left' ) )
+        border = gameMap.addObject( go.Border( ORIGIN, images.Dungeon_of_Pixels_Boundary, size=2000, name='Dungeon of Pixels Border', positionStyle='top_left' ) )
+        background = gameMap.addObject( go.BackGround( ORIGIN, images.Dungeon_of_Pixels_Map, size=2000, name='Dungeon of Pixels', positionStyle='top_left' ) )
 
         self.player = self.createPlayer()
         gameMap.addObject( self.player )
@@ -96,7 +96,7 @@ class JimmyPixel( game.Game ):
         self.player.attachObject( self.darkness )
 
         # Start off with some diggable spots on the screen.
-        self.createDigspots( gameMap, 20 )
+        self.createDigspots( gameMap, 20, border, background )
 
         portalCave1 = go.Portal( Point( 1680, 1480 ), images.Portal, size=( JIMSIZE ), name='portalcave1' )
         gameMap.addObject( portalCave1 )
@@ -139,10 +139,18 @@ class JimmyPixel( game.Game ):
         return go.Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, imageL=leftImages, imageR=rightImages, name='Jimmy Pixel', collisionSpecification=collisionSpec )
 
 
-    def createDigspots( self, gameMap, num ):
+    def createDigspots( self, gameMap, num, border, background ):
+        rect = border.asRectangle()
+        width, height = rect.width, rect.height
+
         for ii in range( num ):
-            pos = Point( random.randint( -WINWIDTH, WINWIDTH * 2 ), random.randint( -WINHEIGHT, WINHEIGHT * 2 ) )
-            dig = go.Digspot( pos, self.images.Diggable_Spot, size=DIGSIZE, name='Digspot' )
+            while True:
+                pos = Point( random.randint( 0, width ), random.randint( 0, height ) )
+                dig = go.Digspot( pos, self.images.Diggable_Spot, size=DIGSIZE, name='Digspot' )
+
+                if not background.collidesWith( dig, forceCollision=True ):
+                    break
+
             gameMap.addObject( dig )
 
 
@@ -156,7 +164,7 @@ class JimmyPixel( game.Game ):
     def createDerangatang( self ):
         viewPort = self.viewPort
         images = self.images
-        random.seed( time.clock() )
+        random.seed( time.process_time )
         derangatangStartPos = Point( viewPort.halfWidth, viewPort.halfHeight ) + Point( random.randint( -100, 100 ), random.randint( -100, 100 ) )
         # derangatangStartPos = Point( viewPort.halfWidth, viewPort.halfHeight )
 
@@ -175,7 +183,7 @@ class JimmyPixel( game.Game ):
     def createSmilee( self ):
         viewPort = self.viewPort
         images = self.images
-        random.seed( time.clock() )
+        random.seed( time.process_time )
         smileeStartPos = Point( viewPort.halfWidth, viewPort.halfHeight ) + Point( random.randint( -100, 100 ), random.randint( -100, 100 ) )
 
         smileeBounds = gd.CollisionBoundary()
