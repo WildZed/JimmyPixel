@@ -39,7 +39,7 @@ FLOATHEIGHT = 20     # How high things float (like bouncing).
 class JimmyPixel( game.Game ):
     def __init__( self, viewPort ):
         # Set up generic game one time set up.
-        super().__init__( 'Jimmy Pixel', 'Jimmy Pixel Right', viewPort )
+        super().__init__( 'Jimmy Pixel', 'Jimmy Pixel Right', viewPort, useAlpha=True )
 
         # Game one time setup.
         # self.setDrawOrder( 'Border', 'BackGround', 'Digspot', 'GhostSprite', 'Sprite', 'Player', 'Fog' )
@@ -50,20 +50,20 @@ class JimmyPixel( game.Game ):
         viewPort.setCameraSlack( 90 )
 
 
-    def loadImages( self ):
+    def loadImages( self, useAlpha = True ):
         images = self.images
-        images.load( 'Dungeon of Pixels Boundary', alpha=False )
-        images.load( 'Dungeon of Pixels Map', alpha=False )
-        images.load( 'Treasure Cave', alpha=False )
-        images.load( 'Jimmy Pixel Right', 'RL', alpha=False )
-        images.load( 'Jimmy Pixel Right Walk', 'RL', alpha=False )
-        images.load( 'Derangatang Right', 'RL', alpha=False )
-        images.load( 'Smilee Right', 'RL', alpha=False )
+        images.load( 'Dungeon of Pixels Boundary', alpha=useAlpha )
+        images.load( 'Dungeon of Pixels Map', alpha=useAlpha )
+        images.load( 'Treasure Cave', alpha=useAlpha )
+        images.load( 'Jimmy Pixel Right', 'RL', alpha=useAlpha )
+        images.load( 'Jimmy Pixel Right Walk', 'RL', alpha=useAlpha )
+        images.load( 'Derangatang Right', 'RL', alpha=useAlpha )
+        images.load( 'Smilee Right', 'RL', alpha=useAlpha )
         images.load( 'Darkness' )
-        images.load( 'Diggable Spot', alpha=False )
-        images.load( 'Portal', alpha=False )
-        images.load( 'Coin', alpha=False )
-        images.load( 'Bag', alpha=False )
+        images.load( 'Diggable Spot', alpha=useAlpha )
+        images.load( 'Portal', alpha=useAlpha )
+        images.load( 'Coin', alpha=useAlpha )
+        images.load( 'Bag', alpha=useAlpha )
 
 
     # Per game initialisation.
