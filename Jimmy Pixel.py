@@ -135,9 +135,10 @@ class JimmyPixel( game.Game ):
         moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
         leftImages = go.ImageAnimation( [ images.Jimmy_Pixel_RightL, images.Jimmy_Pixel_Right_WalkL ] )
         rightImages = go.ImageAnimation( [ images.Jimmy_Pixel_RightR, images.Jimmy_Pixel_Right_WalkR ] )
+        playerImages = go.ImageCollection( left=leftImages, right=rightImages )
         collisionSpec = go.CollisionSpecification( width=0.38, left=0.32 )
 
-        return go.Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, imageL=leftImages, imageR=rightImages, name='Jimmy Pixel', collisionSpecification=collisionSpec )
+        return go.Player( playerStartPos, moveStyle, size=JIMSIZE, ratio=1.0, image=playerImages, name='Jimmy Pixel', collisionSpecification=collisionSpec )
 
 
     def createDigspots( self, gameMap, num, border, background ):
@@ -173,8 +174,8 @@ class JimmyPixel( game.Game ):
         moveStyle = gd.RandomWalkMovementStyle( boundaryStyle=derangatangBounds )
         moveStyle.setMoveRate( MOVERATE )
         moveStyle.setBounceRates( BOUNCERATE, BOUNCEHEIGHT )
-
-        derangatang = go.Sprite( derangatangStartPos, moveStyle, size=DERSIZE, ratio=1.0, imageL=images.Derangatang_RightL, imageR=images.Derangatang_RightR, name='Derangatang' )
+        spriteImages = go.ImageCollection( left=images.Derangatang_RightL, right=images.Derangatang_RightR )
+        derangatang = go.Sprite( derangatangStartPos, moveStyle, size=DERSIZE, ratio=1.0, image=spriteImages, name='Derangatang' )
         # Only collide with the map.
         # derangatang.setCollisionMask( InteractionType.IMPERVIOUS )
 
@@ -191,8 +192,8 @@ class JimmyPixel( game.Game ):
         moveStyle = gd.RandomWalkMovementStyle( boundaryStyle=smileeBounds )
         moveStyle.setMoveRate( FLOATMOVERATE )
         moveStyle.setBounceRates( FLOATRATE, FLOATHEIGHT )
-
-        smilee = go.GhostSprite( smileeStartPos, moveStyle, size=SMILESIZE, ratio=1.0, imageL=images.Smilee_RightL, imageR=images.Smilee_RightR, name='Smilee' )
+        spriteImages = go.ImageCollection( left=images.Smilee_RightL, right=images.Smilee_RightR )
+        smilee = go.GhostSprite( smileeStartPos, moveStyle, size=SMILESIZE, ratio=1.0, image=spriteImages, name='Smilee' )
 
         return smilee
 
