@@ -156,8 +156,15 @@ class JimmyPixel( game.Game ):
             gameMap.addObject( dig )
 
 
-    def createCoin( self ):
-        pos = Point( random.randint( 0, 20 ), random.randint( 0, 20 ) )
+    def createBagPoint( self ):
+        return Point( random.randint( 0, 20 ), random.randint( 0, 20 ) )
+
+
+    def createCoin( self, pos = None ):
+        if not pos:
+            # Eg. relative position from player origin.
+            pos = self.createBagPoint()
+
         coin = go.Coin( pos, self.images.Coin, size=MONEYSIZE )
 
         return coin
@@ -187,7 +194,6 @@ class JimmyPixel( game.Game ):
         images = self.images
         random.seed( time.process_time )
         smileeStartPos = Point( viewPort.halfWidth, viewPort.halfHeight ) + Point( random.randint( -100, 100 ), random.randint( -100, 100 ) )
-
         smileeBounds = gd.CollisionBoundary()
         moveStyle = gd.RandomWalkMovementStyle( boundaryStyle=smileeBounds )
         moveStyle.setMoveRate( FLOATMOVERATE )
@@ -247,7 +253,8 @@ class JimmyPixel( game.Game ):
             if digSpot.digCount >= 3:
                 # Do something.
                 # Dug up some treasure!
-                player.attachObject( self.createCoin() )
+                # player.attachObject( self.createCoin() )
+                gameMap.addObject( self.createCoin( digSpot.pos ) )
                 digSpot.delete()
 
 
@@ -262,7 +269,11 @@ class JimmyPixel( game.Game ):
             keyMods = pygame.key.get_mods()
 
             if keyMods:
-                pass
+                if event.key == K_d and keyMods | KMOD_SHIFT:
+                    objList = player.detachAllObjects()
+
+                    for obj in objList:
+                        gameMap.addObject( obj, offset=player.pos + Point( 40, 0 ) )
             else:
                 if event.key == K_r and self.winMode:
                     # Reset the game once you've won.
@@ -285,6 +296,8 @@ class JimmyPixel( game.Game ):
             if event.obj1.isInteractionTypePair( event.obj2, 'Player', 'GhostSprite=Smilee' ):
                 # print( "Interacted with Smilee" )
                 viewPort.playSound( 'Smilee Laugh', checkBusy=True )
+            elif event.obj1.isInteractionTypePair( event.obj2, 'Player', 'Coin' ):
+                event.obj1.attachObject( event.obj2, pos=self.createBagPoint() ) # Assuming event object order.
         elif event.type == gc.COLLISION_EVENT:
             # print( "Collision event %s <-> %s" % ( event.obj1, event.obj2 ) )
 
@@ -303,6 +316,8 @@ class JimmyPixel( game.Game ):
             # print( 'Click collision event:', event )
             if event.obj.name == 'Digspot':
                 self.dig( event.obj, viewPort.getWorldCoordinate( self.clickPos ) )
+            elif event.obj.name == 'Coin':
+                player.attachObject( event.obj, pos=self.createBagPoint() )
 
 
     def updateState( self ):
